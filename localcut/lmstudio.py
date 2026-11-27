@@ -7,7 +7,9 @@ returned usage so the bench can record tokens, and a health check for `doctor`.
 from __future__ import annotations
 
 import base64
+import io
 import mimetypes
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,10 +30,21 @@ def _client(timeout: float = 600.0) -> httpx.Client:
     return httpx.Client(base_url=config.LMSTUDIO_URL, timeout=httpx.Timeout(timeout, connect=5.0))
 
 
-def image_part(path: Path) -> dict:
-    mime = mimetypes.guess_type(path.name)[0] or "image/jpeg"
-    b64 = base64.b64encode(path.read_bytes()).decode()
-    return {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}}
+def image_part(path: Path, max_side: int | None = None) -> dict:
+    """Image as a data URL. `max_side` downsizes on the fly: fewer image tokens -> shorter prefill."""
+    max_side = max_side or int(os.environ.get("LOCALCUT_VLM_MAX_SIDE", "512"))
+    from PIL import Image
+
+    img = Image.open(path)
+    if max(img.size) > max_side:
+        img = img.copy()
+        img.thumbnail((max_side, max_side))
+        buf = io.BytesIO()
+        img.convert("RGB").save(buf, format="JPEG", quality=88)
+        data, mime = buf.getvalue(), "image/jpeg"
+    else:
+        data, mime = path.read_bytes(), mimetypes.guess_type(path.name)[0] or "image/jpeg"
+    return {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{base64.b64encode(data).decode()}"}}
 
 
 def chat(messages: list[dict], model: str, max_tokens: int = 1200, temperature: float = 0.2) -> ChatResult:
