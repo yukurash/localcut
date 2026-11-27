@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Footage, work files and runs never belong in this repo.
+# Keep them outside the repo (see LOCALCUT_FOOTAGE_DIR / LOCALCUT_WORK_DIR).
+footage/
+work/
+runs/
+*.mp4
+*.mov
+*.mkv
+*.m4a
+*.wav
+*.jpg
+*.jpeg
+!docs/**/*.jpg
+
+# Local tools and models
+tools/
+models/
+*.onnx
+*.bin
+*.gguf
+
+# Local config
+.env
+local-config/
+.claude/settings.local.json

@@ -1,0 +1,13 @@
+localcut includes code adapted from the following project:
+
+Surface-Laptop-Ultra-RTX-Spark-Vibe-Coding-kit (spark-vibe)
+https://github.com/dahatake/Surface-Laptop-Ultra-RTX-Spark-Vibe-Coding-kit
+Copyright (c) 2026 Daiyu Hatakeyama
+Licensed under the MIT License.
+
+Adapted parts:
+- localcut/lmstudio.py: the LM Studio chat client (OpenAI-compatible /chat/completions,
+  reasoning_effort, <think> stripping, image data URLs) is adapted from server.py `_chat`.
+- The "checklist" judging style (the model reports observations per criterion and the
+  verdict is computed in code) follows server.py `visual_review`.
+- bench/ result layout (environment.json / raw.jsonl / summary.json) follows bench/common.py.
