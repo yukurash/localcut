@@ -47,8 +47,9 @@ def image_part(path: Path, max_side: int | None = None) -> dict:
     return {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{base64.b64encode(data).decode()}"}}
 
 
-def chat(messages: list[dict], model: str, max_tokens: int = 1200, temperature: float = 0.2) -> ChatResult:
-    with _client() as c:
+def chat(messages: list[dict], model: str, max_tokens: int = 1200, temperature: float = 0.2,
+         timeout: float = 600.0) -> ChatResult:
+    with _client(timeout) as c:
         r = c.post("/chat/completions", json={
             "model": model, "messages": messages, "max_tokens": max_tokens,
             "temperature": temperature, "reasoning_effort": config.REASONING_EFFORT,
