@@ -7,12 +7,16 @@ the model's free-text observations stay in work/renders/<id>/review.json.
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
-from pathlib import Path
+
+import httpx
 
 from . import config, lmstudio, media
 from .plan import Plan
+
+REVIEW_TIMEOUT = os.environ.get("LOCALCUT_REVIEW_TIMEOUT", "120")
 
 SYSTEM = (
     "You verify one frame of a vertical travel video against acceptance criteria. For each criterion, first "
@@ -44,23 +48,29 @@ def review(plan: Plan, render_id: str) -> dict:
         subprocess.run([ff, "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{t + c.length / 2:.2f}", "-i", str(final),
                         "-frames:v", "1", "-vf", "scale=540:-2", str(frame)], check=True)
         crit = criteria_for(c.telop)
-        res = lmstudio.chat([
-            {"role": "system", "content": SYSTEM},
-            {"role": "user", "content": [{"type": "text", "text": "Criteria:\n- " + "\n- ".join(crit)},
-                                         lmstudio.image_part(frame)]},
-        ], config.VISION_MODEL, max_tokens=700)
-        m = re.search(r"\{.*\}", res.text, flags=re.S)
-        try:
-            items = json.loads(m.group(0)).get("criteria", []) if m else []
-        except json.JSONDecodeError:
-            items = []
+        items, error = [], None
+        for attempt in range(2):  # a hung local request must not sink the whole review
+            try:
+                res = lmstudio.chat([
+                    {"role": "system", "content": SYSTEM},
+                    {"role": "user", "content": [{"type": "text", "text": "Criteria:\n- " + "\n- ".join(crit)},
+                                                 lmstudio.image_part(frame)]},
+                ], config.VISION_MODEL, max_tokens=700, timeout=float(REVIEW_TIMEOUT))
+                m = re.search(r"\{.*\}", res.text, flags=re.S)
+                items = json.loads(m.group(0)).get("criteria", []) if m else []
+                error = None
+                break
+            except (httpx.HTTPError, json.JSONDecodeError) as e:
+                error = type(e).__name__
         met = [bool(x.get("met")) for x in items if isinstance(x, dict)][: len(crit)]
-        results.append({"cut": i, "shot": c.shot, "met": met, "n": len(crit), "observed": items})
+        results.append({"cut": i, "shot": c.shot, "met": met, "n": len(crit), "observed": items, "error": error})
         t += c.length
     (out_dir / "review.json").write_text(json.dumps(results, ensure_ascii=False, indent=1), encoding="utf-8")
     passed = sum(1 for r in results if r["met"] and all(r["met"]) and len(r["met"]) == r["n"])
     # Only booleans are returned; free-text observations stay local.
+    errors = [r["cut"] for r in results if r["error"]]
     return {"render_id": render_id, "cuts": len(results), "cuts_passed": passed,
-            "verdict": "pass" if passed == len(results) else "fail",
+            "verdict": "pass" if passed == len(results) else ("incomplete" if errors else "fail"),
+            "not_checked": errors,
             "failed": [{"cut": r["cut"], "shot": r["shot"], "met": r["met"]} for r in results
-                       if not (r["met"] and all(r["met"]) and len(r["met"]) == r["n"])]}
+                       if not r["error"] and not (r["met"] and all(r["met"]) and len(r["met"]) == r["n"])]}
