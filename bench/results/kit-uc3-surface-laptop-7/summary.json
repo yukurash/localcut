@@ -1,0 +1,58 @@
+{
+ "n_per_item": 5,
+ "arms": {
+  "checklist": {
+   "latency_sec": {
+    "n": 35,
+    "min": 33.54918780000298,
+    "median": 54.99504420000085,
+    "mean": 59.140939865714195,
+    "p95": 89.93722519999938,
+    "max": 124.5587274999998,
+    "stdev": 21.146012689384406
+   },
+   "accuracy": 0.886,
+   "ratio_local_over_ultra_median": 7.29
+  },
+  "holistic": {
+   "latency_sec": {
+    "n": 35,
+    "min": 19.93573219999962,
+    "median": 45.248060100002476,
+    "mean": 46.64868547428539,
+    "p95": 79.30310499999905,
+    "max": 93.1856968999964,
+    "stdev": 18.456110842368645
+   },
+   "accuracy": 0.714,
+   "ratio_local_over_ultra_median": 9.43
+  }
+ },
+ "published_ultra": {
+  "checklist": {
+   "latency_sec": {
+    "n": 35,
+    "min": 6.073,
+    "median": 7.54,
+    "mean": 7.531,
+    "p95": 8.855,
+    "max": 8.866,
+    "stdev": 0.712
+   },
+   "accuracy": 0.857
+  },
+  "holistic": {
+   "latency_sec": {
+    "n": 35,
+    "min": 3.757,
+    "median": 4.799,
+    "mean": 4.797,
+    "p95": 6.239,
+    "max": 6.809,
+    "stdev": 0.71
+   },
+   "accuracy": 0.714
+  }
+ },
+ "published_env": "NVIDIA RTX Spark N1X (6144-core Blackwell RTX GPU), 621.14, 64000 MiB"
+}

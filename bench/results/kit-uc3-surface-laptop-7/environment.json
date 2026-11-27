@@ -1,0 +1,9 @@
+{
+ "captured_at": "2026-11-27T13:40:56+09:00",
+ "platform": "Windows-10-10.0.26300-SP0",
+ "machine": "ARM64",
+ "processor": "ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc",
+ "python": "3.11.9",
+ "vision_model": "google/gemma-4-e4b",
+ "lms_ps": "\nIDENTIFIER            MODEL                 STATUS    SIZE       CONTEXT    PARALLEL    LOAD CONFIG    DEVICE    TTL\ngoogle/gemma-4-e4b    google/gemma-4-e4b    IDLE      6.33 GB    8192       1           LM Studio      Local        \n\n"
+}
