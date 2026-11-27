@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__localcut__footage_status",
+      "mcp__localcut__get_edit_brief",
+      "mcp__localcut__submit_edit_plan",
+      "mcp__localcut__render_preview",
+      "mcp__localcut__review_render",
+      "mcp__localcut__egress_report"
+    ],
+    "deny": [
+      "Read(../localcut-private/footage/**)",
+      "Read(../localcut-private/work/**)",
+      "Read(../localcut-private/tools/**)"
+    ]
+  }
+}

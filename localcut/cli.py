@@ -59,6 +59,32 @@ def analyze_cmd(args) -> int:
     return 0
 
 
+def caption_cmd(args) -> int:
+    from .caption import caption_clip
+    from .metrics import Recorder
+
+    rec = Recorder(_run_dir("caption"), {"command": "caption", "vision_model": config.VISION_MODEL})
+    for cdir in sorted(p for p in config.WORK_DIR.iterdir() if p.is_dir() and p.name.startswith("C")):
+        if args.only and cdir.name not in args.only:
+            continue
+        caps = caption_clip(cdir, recorder=rec)
+        for c in caps:
+            print(f"{c['shot']} {c['place']} / {c['subject']} / {c['action']} people={c['people']} "
+                  f"★{c['highlight']} q={c['quality']}")
+    s = rec.close().get("caption", {})
+    print(f"caption: {s.get('total_frames')} frames, {s.get('sec_per_frame')} s/frame")
+    return 0
+
+
+def brief_cmd(args) -> int:
+    from .brief import build_brief, load_shots
+
+    text = build_brief(load_shots(), detail=args.detail)
+    print(text)
+    print(f"# {len(text.encode('utf-8'))} bytes")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="localcut", description="Footage stays home. Words go to the cloud.")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -66,6 +92,12 @@ def main(argv: list[str] | None = None) -> int:
     a = sub.add_parser("analyze", help="overnight local analysis of the footage folder")
     a.add_argument("--no-faces", action="store_true", help="skip face detection/blur")
     a.set_defaults(func=analyze_cmd)
+    c = sub.add_parser("caption", help="local VLM captions for every keyframe")
+    c.add_argument("--only", nargs="*", help="clip ids, e.g. C01 C04")
+    c.set_defaults(func=caption_cmd)
+    b = sub.add_parser("brief", help="print the edit brief (what the cloud would receive, before the gate)")
+    b.add_argument("--detail", default="normal", choices=["normal", "full"])
+    b.set_defaults(func=brief_cmd)
     args = p.parse_args(argv)
     return args.func(args)
 
