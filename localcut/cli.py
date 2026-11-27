@@ -39,10 +39,33 @@ def doctor(_args) -> int:
     return 0 if all(results) else 1
 
 
+def _run_dir(name: str):
+    import datetime as dt
+
+    return config.RUNS_DIR / f"{dt.datetime.now():%Y%m%d-%H%M%S}-{name}"
+
+
+def analyze_cmd(args) -> int:
+    from .analyze import analyze
+    from .metrics import Recorder
+
+    rec = Recorder(_run_dir("analyze"), {"command": "analyze"})
+    result = analyze(faces_enabled=not args.no_faces, recorder=rec)
+    summary = rec.close()
+    for stage, s in summary.items():
+        if not stage.startswith("_"):
+            print(f"{stage:10s} total {s['total_wall_sec']:8.2f}s  frames {s['total_frames']}")
+    print(f"peak memory used: {summary['_peak_mem_used_mb']} MB / clips: {result['clips']}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="localcut", description="Footage stays home. Words go to the cloud.")
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("doctor", help="check local dependencies").set_defaults(func=doctor)
+    a = sub.add_parser("analyze", help="overnight local analysis of the footage folder")
+    a.add_argument("--no-faces", action="store_true", help="skip face detection/blur")
+    a.set_defaults(func=analyze_cmd)
     args = p.parse_args(argv)
     return args.func(args)
 
